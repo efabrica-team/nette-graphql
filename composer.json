@@ -1,0 +1,40 @@
+{
+    "name": "efabrica/nette-graphql",
+    "type": "library",
+    "description": "Nette implementation of efabrica/graphql package.",
+    "keywords": [
+        "php",
+        "nette",
+        "graphql"
+    ],
+    "readme": "README.md",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Martin Petricko",
+            "email": "matopetricko@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.4",
+        "efabrica/graphql": "dev-main",
+        "nette/database": "^3.1",
+        "symfony/string": "^5.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Efabrica\\GraphQL\\Nette\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
