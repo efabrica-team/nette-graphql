@@ -65,6 +65,104 @@ class OrderConditionsTest extends TestCase
         ], $result);
     }
 
+    public function testWhereOnHasManyRelationResults(): void
+    {
+        $result = $this->graphQL->executeQuery(
+            <<<GQL
+            {
+                categories {
+                    id
+                    name
+                    products__category_id (
+                        order: {
+                            key: "id"
+                            order: DESC
+                        }
+                    ) {
+                        id
+                        name
+                        description
+                        price
+                    }
+                }
+            }
+            GQL
+        );
+
+        $this->assertSame([
+            'data' => [
+                'categories' => [
+                    [
+                        'id' => '1',
+                        'name' => 'Category #1',
+                        'products__category_id' => [
+                            [
+                                'id' => 9,
+                                'name' => 'Product #9',
+                                'description' => null,
+                                'price' => 21.0,
+                            ],
+                            [
+                                'id' => 6,
+                                'name' => 'Product #6',
+                                'description' => null,
+                                'price' => 32.0,
+                            ],
+                            [
+                                'id' => 2,
+                                'name' => 'Product #2',
+                                'description' => 'Dolor sit',
+                                'price' => 5.69,
+                            ],
+                            [
+                                'id' => 1,
+                                'name' => 'Product #1',
+                                'description' => 'Lorem ipsum',
+                                'price' => 6.99,
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => '2',
+                        'name' => 'Category #2',
+                        'products__category_id' => [
+                            [
+                                'id' => 8,
+                                'name' => 'Product #8',
+                                'description' => null,
+                                'price' => 19.99,
+                            ],
+                            [
+                                'id' => 4,
+                                'name' => 'Product #4',
+                                'description' => 'Dolor sit',
+                                'price' => 12.49,
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => '3',
+                        'name' => 'Category #3',
+                        'products__category_id' => [
+                            [
+                                'id' => 10,
+                                'name' => 'Product #10',
+                                'description' => 'Mora de sito',
+                                'price' => 22.0,
+                            ],
+                            [
+                                'id' => 5,
+                                'name' => 'Product #5',
+                                'description' => 'Aster mor',
+                                'price' => 16.2,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ], $result);
+    }
+
     public function testCandOrderByMultipleKeys(): void
     {
         $result = $this->graphQL->executeQuery(

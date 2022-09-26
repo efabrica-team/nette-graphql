@@ -245,6 +245,47 @@ class NetteDatabaseSchemaLoaderOptionsTest extends TestCase
         ], $result);
     }
 
+    public function testIgnoresNonexistentTablesOnWhitelist(): void
+    {
+        $this->schemaLoader->setOnlyTables(['categories', 'products', 'clients']);
+        $result = $this->graphQL->executeQuery(
+            <<<GQL
+            {
+              __schema {
+                queryType {
+                  fields {
+                    name
+                  }
+                }
+              }
+            }
+            GQL
+        );
+
+        $this->assertSame([
+            'data' => [
+                '__schema' => [
+                    'queryType' => [
+                        'fields' => [
+                            [
+                                'name' => 'categories',
+                            ],
+                            [
+                                'name' => 'categories_count',
+                            ],
+                            [
+                                'name' => 'products',
+                            ],
+                            [
+                                'name' => 'products_count',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ], $result);
+    }
+
     public function testTablesHaveAllFields(): void
     {
         $result = $this->graphQL->executeQuery(

@@ -282,4 +282,55 @@ class FetchAllTest extends TestCase
             ],
         ], $result);
     }
+
+    public function testCanLimitResults(): void
+    {
+        $result = $this->graphQL->executeQuery(
+            <<<GQL
+            {
+                products (
+                    pagination: {
+                        limit: 3
+                        offset: 2
+                    }
+                ) {
+                    id
+                    category_id
+                    name
+                    description
+                    price
+                }
+            }
+            GQL
+        );
+
+        $this->assertSame([
+            'data' => [
+                'products' => [
+                    [
+                        'id' => 3,
+                        'category_id' => null,
+                        'name' => 'Product #3',
+                        'description' => null,
+                        'price' => 18.99,
+                    ],
+                    [
+                        'id' => 4,
+                        'category_id' => 2,
+                        'name' => 'Product #4',
+                        'description' => 'Dolor sit',
+                        'price' => 12.49,
+                    ],
+                    [
+                        'id' => 5,
+                        'category_id' => 3,
+                        'name' => 'Product #5',
+                        'description' => 'Aster mor',
+                        'price' => 16.2,
+                    ],
+                ],
+            ],
+        ], $result);
+    }
+
 }

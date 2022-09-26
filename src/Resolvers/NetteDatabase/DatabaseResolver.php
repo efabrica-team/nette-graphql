@@ -40,7 +40,7 @@ abstract class DatabaseResolver implements ResolverInterface
         foreach ($args[OrderArgument::NAME] ?? [] as $orderArgs) {
             $orderBy = $orderArgs[OrderArgument::FIELD_KEY] ?? null;
             if ($orderBy) {
-                $order = strtoupper($orderArgs[OrderArgument::FIELD_ORDER] ?? null);
+                $order = $orderArgs[OrderArgument::FIELD_ORDER] ?? null;
 
                 if ($order === OrderDirectionEnum::RAND) {
                     $selection->order('RAND()');
@@ -158,6 +158,9 @@ abstract class DatabaseResolver implements ResolverInterface
                             break;
                         case WhereComparatorEnum::LIKE:
                             $conditionWhereQuery .= ' LIKE';
+                            break;
+                        case WhereComparatorEnum::NOT_LIKE:
+                            $conditionWhereQuery .= ' NOT LIKE';
                             break;
                         default:
                             throw new ResolverException("'$comparator' is not a valid comparator.");
