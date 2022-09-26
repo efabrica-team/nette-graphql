@@ -8,7 +8,7 @@
         "graphql"
     ],
     "readme": "README.md",
-    "license": "proprietary",
+    "license": "MIT",
     "authors": [
         {
             "name": "Martin Petricko",
@@ -17,7 +17,7 @@
         }
     ],
     "require": {
-        "php": "^7.4",
+        "php": "^7.4|^8.0",
         "efabrica/graphql": "dev-main",
         "nette/database": "^3.1",
         "symfony/string": "^5.4"

@@ -254,6 +254,17 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
         return $this;
     }
 
+    public function getBelongsToReplacePattern(): string
+    {
+        return $this->belongsToReplacePattern;
+    }
+
+    public function setBelongsToReplacePattern(string $belongsToReplacePattern): self
+    {
+        $this->belongsToReplacePattern = $belongsToReplacePattern;
+        return $this;
+    }
+
     private function getTables(IStructure $structure): array
     {
         $tables = array_column($structure->getTables(), 'name');

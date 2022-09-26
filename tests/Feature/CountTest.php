@@ -50,6 +50,31 @@ class CountTest extends TestCase
         ], $result);
     }
 
+    public function testCanCountWithConditionsTables(): void
+    {
+        $result = $this->graphQL->executeQuery(
+            <<<GQL
+            {
+                categories_count (
+                    conditions: {
+                        where: {
+                            column: "id"
+                            value: ["1", "3"]
+                            comparator: IN
+                        }
+                    }
+                )
+            }
+            GQL
+        );
+
+        $this->assertSame([
+            'data' => [
+                'categories_count' => 2,
+            ],
+        ], $result);
+    }
+
     public function testCanCountRelations(): void
     {
         $result = $this->graphQL->executeQuery(
@@ -77,6 +102,47 @@ class CountTest extends TestCase
                     [
                         'id' => '3',
                         'products__category_id_count' => 2
+                    ],
+                ]
+            ],
+        ], $result);
+    }
+
+    public function testCanCountRelationsWithConditions(): void
+    {
+        $result = $this->graphQL->executeQuery(
+            <<<GQL
+            {
+                categories {
+                    id
+                    products__category_id_count (
+                        conditions: {
+                            where: {
+                                column: "id"
+                                value: ["1", "3", "5"]
+                                comparator: IN
+                            }
+                        }
+                    )
+                }
+            }
+            GQL
+        );
+
+        $this->assertSame([
+            'data' => [
+                'categories' => [
+                    [
+                        'id' => '1',
+                        'products__category_id_count' => 1
+                    ],
+                    [
+                        'id' => '2',
+                        'products__category_id_count' => 0
+                    ],
+                    [
+                        'id' => '3',
+                        'products__category_id_count' => 1
                     ],
                 ]
             ],

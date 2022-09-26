@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
-- Initialized package
+- Nette database schema loader
+- Nette database resolvers
 
-[Unreleased]: https://gitlab.com/phdev-lana/templates/php-package/compare/0.0.0...main
+[Unreleased]: https://github.com/efabrica-team/nette-graphql/compare/0.0.0...main

@@ -34,7 +34,7 @@ class GroupConditionsTest extends TestCase
             {
                 products (
                     conditions: {
-                        group_conditions: {
+                        group: {
                             column: "category_id"
                         }
                     }

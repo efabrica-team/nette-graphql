@@ -619,4 +619,90 @@ class FetchAllWithRelationsTest extends TestCase
             ],
         ], $result);
     }
+
+    public function testCanLimitHasManyResults(): void
+    {
+        $result = $this->graphQL->executeQuery(
+            <<<GQL
+            {
+                categories {
+                    id
+                    name
+                    products__category_id (
+                        pagination: {
+                            limit: 2
+                        }
+                    ) {
+                        id
+                        name
+                        description
+                        price
+                    }
+                }
+            }
+            GQL
+        );
+
+        $this->assertSame([
+            'data' => [
+                'categories' => [
+                    [
+                        'id' => '1',
+                        'name' => 'Category #1',
+                        'products__category_id' => [
+                            [
+                                'id' => 1,
+                                'name' => 'Product #1',
+                                'description' => 'Lorem ipsum',
+                                'price' => 6.99,
+                            ],
+                            [
+                                'id' => 2,
+                                'name' => 'Product #2',
+                                'description' => 'Dolor sit',
+                                'price' => 5.69,
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => '2',
+                        'name' => 'Category #2',
+                        'products__category_id' => [
+                            [
+                                'id' => 4,
+                                'name' => 'Product #4',
+                                'description' => 'Dolor sit',
+                                'price' => 12.49,
+                            ],
+                            [
+                                'id' => 8,
+                                'name' => 'Product #8',
+                                'description' => null,
+                                'price' => 19.99,
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => '3',
+                        'name' => 'Category #3',
+                        'products__category_id' => [
+                            [
+                                'id' => 5,
+                                'name' => 'Product #5',
+                                'description' => 'Aster mor',
+                                'price' => 16.2,
+                            ],
+                            [
+                                'id' => 10,
+                                'name' => 'Product #10',
+                                'description' => 'Mora de sito',
+                                'price' => 22.0,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ], $result);
+    }
+
 }
