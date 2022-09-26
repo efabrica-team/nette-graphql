@@ -1,0 +1,34 @@
+name: CI
+
+on: [ push ]
+
+jobs:
+  phpstan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: php-actions/composer@v6
+
+      - name: PHPStan Static Analysis
+        uses: php-actions/phpstan@master
+        with:
+          path: src/
+          level: 5
+
+  phpunit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: php-actions/composer@v6
+
+      - name: PHPUnit Tests
+        uses: php-actions/phpunit@v2
+        with:
+          php_extensions: xdebug
+          bootstrap: vendor/autoload.php
+          configuration: phpunit.xml
+          args: --coverage-text
+        env:
+          XDEBUG_MODE: coverage
