@@ -9,7 +9,7 @@ use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\TableCountResolver;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\TableResolver;
 use Nette\Database\Explorer;
 
-class NetteDatabaseResolverFactory
+class NetteDatabaseResolverFactory implements NetteDatabaseResolverFactoryInterface
 {
     private Explorer $explorer;
 

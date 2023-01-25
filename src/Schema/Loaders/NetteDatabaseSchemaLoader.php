@@ -3,7 +3,7 @@
 namespace Efabrica\GraphQL\Nette\Schema\Loaders;
 
 use Efabrica\GraphQL\Helpers\DatabaseColumnTypeTransformer;
-use Efabrica\GraphQL\Nette\Factories\NetteDatabaseResolverFactory;
+use Efabrica\GraphQL\Nette\Factories\NetteDatabaseResolverFactoryInterface;
 use Efabrica\GraphQL\Schema\Custom\Arguments\ConditionsArgument;
 use Efabrica\GraphQL\Schema\Custom\Arguments\OrderArgument;
 use Efabrica\GraphQL\Schema\Custom\Arguments\PaginationArgument;
@@ -21,7 +21,7 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
 {
     private Explorer $explorer;
 
-    private NetteDatabaseResolverFactory $resolverFactory;
+    private NetteDatabaseResolverFactoryInterface $resolverFactory;
 
     private DatabaseColumnTypeTransformer $databaseColumnTypeTransformer;
 
@@ -41,7 +41,7 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
 
     public function __construct(
         Explorer $explorer,
-        NetteDatabaseResolverFactory $resolverFactory,
+        NetteDatabaseResolverFactoryInterface $resolverFactory,
         DatabaseColumnTypeTransformer $databaseColumnTypeTransformer,
         InflectorInterface $inflector
     ) {
