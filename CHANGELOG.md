@@ -5,9 +5,12 @@
 ## [0.2.0] - 2023-04-06
 ### Added
 - Nette DI extension
-- AdditionalResponseData to resolver factory [BC]
+- AdditionalResponseData to NetteDatabaseResolverFactory and DatabaseResolver [BC]
 - Debug exceptions to resolvers 
 - Logging of SQL queries to addition debug data in DatabaseResolver
+
+### Changed
+- NetteDatabaseSchemaLoader accepts NetteDatabaseResolverFactoryInterface instead of NetteDatabaseResolverFactory [BC]
 
 ### Removed
 - Example config.neon [BC]
