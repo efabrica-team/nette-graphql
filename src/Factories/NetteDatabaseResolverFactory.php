@@ -2,6 +2,7 @@
 
 namespace Efabrica\GraphQL\Nette\Factories;
 
+use Efabrica\GraphQL\Helpers\AdditionalResponseData;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\BelongsToResolver;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\HasManyCountResolver;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\HasManyResolver;
@@ -9,15 +10,18 @@ use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\TableCountResolver;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\TableResolver;
 use Nette\Database\Explorer;
 
-class NetteDatabaseResolverFactory
+class NetteDatabaseResolverFactory implements NetteDatabaseResolverFactoryInterface
 {
     private Explorer $explorer;
 
+    private AdditionalResponseData $additionalResponseData;
+
     private bool $firstParty = false;
 
-    public function __construct(Explorer $explorer)
+    public function __construct(Explorer $explorer, AdditionalResponseData $additionalResponseData)
     {
         $this->explorer = $explorer;
+        $this->additionalResponseData = $additionalResponseData;
     }
 
     public function isFirstParty(): bool
@@ -33,26 +37,26 @@ class NetteDatabaseResolverFactory
 
     public function createTableResolver(): TableResolver
     {
-        return new TableResolver($this->explorer, $this->firstParty);
+        return new TableResolver($this->explorer, $this->additionalResponseData, $this->firstParty);
     }
 
     public function createTableCountResolver(): TableCountResolver
     {
-        return new TableCountResolver($this->explorer, $this->firstParty);
+        return new TableCountResolver($this->explorer, $this->additionalResponseData, $this->firstParty);
     }
 
     public function createBelongsToResolver(): BelongsToResolver
     {
-        return new BelongsToResolver($this->explorer, $this->firstParty);
+        return new BelongsToResolver($this->explorer, $this->additionalResponseData, $this->firstParty);
     }
 
     public function createHasManyResolver(): HasManyResolver
     {
-        return new HasManyResolver($this->explorer, $this->firstParty);
+        return new HasManyResolver($this->explorer, $this->additionalResponseData, $this->firstParty);
     }
 
     public function createHasManyCountResolver(): HasManyCountResolver
     {
-        return new HasManyCountResolver($this->explorer, $this->firstParty);
+        return new HasManyCountResolver($this->explorer, $this->additionalResponseData, $this->firstParty);
     }
 }

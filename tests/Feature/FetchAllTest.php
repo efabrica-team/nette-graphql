@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Efabrica\GraphQL\Drivers\WebonyxDriver;
 use Efabrica\GraphQL\GraphQL;
+use Efabrica\GraphQL\Helpers\AdditionalResponseData;
 use Efabrica\GraphQL\Helpers\DatabaseColumnTypeTransformer;
 use Efabrica\GraphQL\Nette\Factories\NetteDatabaseResolverFactory;
 use Efabrica\GraphQL\Nette\Schema\Loaders\NetteDatabaseSchemaLoader;
@@ -17,13 +18,14 @@ class FetchAllTest extends TestCase
     protected function setUp(): void
     {
         $explorer = $this->createExplorer(__DIR__ . '/../Mock/data.sql');
+        $additionalResponseData = new AdditionalResponseData();
         $schemaLoader = new NetteDatabaseSchemaLoader(
             $explorer,
-            new NetteDatabaseResolverFactory($explorer),
+            new NetteDatabaseResolverFactory($explorer, $additionalResponseData),
             new DatabaseColumnTypeTransformer(),
             new EnglishInflector()
         );
-        $driver = new WebonyxDriver($schemaLoader);
+        $driver = new WebonyxDriver($schemaLoader, $additionalResponseData);
         $this->graphQL = new GraphQL($driver);
     }
 

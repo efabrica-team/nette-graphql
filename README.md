@@ -16,17 +16,17 @@ composer require efabrica/nette-graphql
 ```neon
 # config.neon
 
-includes:
-    - ../../../vendor/efabrica/nette-graphql/config.neon
+extensions:
+    graphql: Efabrica\GraphQL\Nette\Bridge\DI\NetteGraphQLExtension
     
 services:
     - Symfony\Component\String\Inflector\EnglishInflector
 
-    netteDatabaseResolverFactory:
+    graphql.schemaLoader:
         setup:
             - #...
 
-    netteDatabaseSchemaLoader:
+    graphql.resolverFactory:
         setup:
             - #...
 ```
