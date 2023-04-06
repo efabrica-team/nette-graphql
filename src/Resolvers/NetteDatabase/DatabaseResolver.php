@@ -3,6 +3,7 @@
 namespace Efabrica\GraphQL\Nette\Resolvers\NetteDatabase;
 
 use Efabrica\GraphQL\Exceptions\ResolverException;
+use Efabrica\GraphQL\Helpers\AdditionalResponseData;
 use Efabrica\GraphQL\Resolvers\ResolverInterface;
 use Efabrica\GraphQL\Schema\Custom\Arguments\ConditionsArgument;
 use Efabrica\GraphQL\Schema\Custom\Arguments\OrderArgument;
@@ -13,19 +14,33 @@ use Efabrica\GraphQL\Schema\Custom\Fields\WhereOrField;
 use Efabrica\GraphQL\Schema\Custom\Types\OrderDirectionEnum;
 use Efabrica\GraphQL\Schema\Custom\Types\WhereComparatorEnum;
 use Efabrica\GraphQL\Schema\Custom\Types\WhereType;
+use Nette\Database\Connection;
 use Nette\Database\Explorer;
+use Nette\Database\ResultSet;
 use Nette\Database\Table\Selection;
+use PDOException;
 
 abstract class DatabaseResolver implements ResolverInterface
 {
     protected Explorer $explorer;
 
+    protected AdditionalResponseData $additionalResponseData;
+
     protected bool $firstParty;
 
-    public function __construct(Explorer $explorer, $firstParty)
+    public function __construct(Explorer $explorer, AdditionalResponseData $additionalResponseData, $firstParty)
     {
         $this->explorer = $explorer;
+        $this->additionalResponseData = $additionalResponseData;
         $this->firstParty = $firstParty;
+
+        $this->explorer->getConnection()->onQuery['log_executed_graphql_queries'] = function (Connection $connection, $result) {
+            if ($result instanceof ResultSet) {
+                $this->additionalResponseData->debugData['sql'][] = '(' . sprintf('%0.3f', $result->getTime() * 1000) . ' ms) ' . $result->getQueryString();
+            } elseif ($result instanceof PDOException) {
+                $this->additionalResponseData->debugData['sql'][] = $result->queryString ?? '';
+            }
+        };
     }
 
     protected function applyPaginationToSelection(Selection $selection, array $args): void
