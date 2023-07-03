@@ -135,7 +135,7 @@ abstract class DatabaseResolver implements ResolverInterface
                 }
 
                 $comparator = $condition[WhereType::FIELD_COMPARATOR];
-                $value = $condition[WhereType::FIELD_VALUE];
+                $value = $condition[WhereType::FIELD_VALUE] ?? null;
 
                 if (in_array($comparator, [WhereComparatorEnum::IN, WhereComparatorEnum::NOT_IN], true)) {
                     switch ($comparator) {
@@ -150,6 +150,15 @@ abstract class DatabaseResolver implements ResolverInterface
                             break;
                     }
                     $parameters[] = $value;
+                } elseif(in_array($comparator, [WhereComparatorEnum::NULL, WhereComparatorEnum::NOT_NULL], true)) {
+                    switch ($comparator) {
+                        case WhereComparatorEnum::NULL:
+                            $conditionWhereQuery .= ' IS NULL';
+                            break;
+                        case WhereComparatorEnum::NOT_NULL:
+                            $conditionWhereQuery .= ' IS NOT NULL';
+                            break;
+                    }
                 } else {
                     $value = $value ? reset($value) : null;
                     switch ($comparator) {
