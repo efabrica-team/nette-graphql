@@ -332,8 +332,15 @@ abstract class DatabaseResolver implements ResolverInterface
                             throw new ResolverException("'$comparator' is not a valid comparator.");
                     }
 
-                    $conditionHavingQuery .= ' ?';
-                    $parameters[] = $value ?? 'NULL';
+                    if (LiteralType::isLiteral($value)) {
+                        if (!$this->firstParty) {
+                            throw new ResolverException('Literal values are not allowed when not in first party mode.');
+                        }
+                        $conditionHavingQuery .= ' ' . LiteralType::getLiteralValue($value);
+                    } else {
+                        $conditionHavingQuery .= ' ?';
+                        $parameters[] = $value ?? 'NULL';
+                    }
                 }
             }
 
