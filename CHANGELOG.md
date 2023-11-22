@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Support for having conditions
+- Literal condition values for first party mode
 
 ## [0.2.1] - 2023-07-03
 ### Added

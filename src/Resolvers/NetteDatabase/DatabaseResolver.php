@@ -4,6 +4,7 @@ namespace Efabrica\GraphQL\Nette\Resolvers\NetteDatabase;
 
 use Efabrica\GraphQL\Exceptions\ResolverException;
 use Efabrica\GraphQL\Helpers\AdditionalResponseData;
+use Efabrica\GraphQL\Nette\Schema\Custom\Types\LiteralType;
 use Efabrica\GraphQL\Resolvers\ResolverInterface;
 use Efabrica\GraphQL\Schema\Custom\Arguments\ConditionsArgument;
 use Efabrica\GraphQL\Schema\Custom\Arguments\OrderArgument;
@@ -213,8 +214,15 @@ abstract class DatabaseResolver implements ResolverInterface
                             throw new ResolverException("'$comparator' is not a valid comparator.");
                     }
 
-                    $conditionWhereQuery .= ' ?';
-                    $parameters[] = $value ?? 'NULL';
+                    if (LiteralType::isLiteral($value)) {
+                        if (!$this->firstParty) {
+                            throw new ResolverException("Literal values are not allowed when not in first party mode.");
+                        }
+                        $conditionWhereQuery .= ' ' . LiteralType::getLiteralValue($value);
+                    } else {
+                        $conditionWhereQuery .= ' ?';
+                        $parameters[] = $value ?? 'NULL';
+                    }
                 }
             }
 
