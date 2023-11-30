@@ -21,6 +21,11 @@ final class HasManyResolver extends DatabaseResolver
             $resolveInfo->getField()->getSetting('referencing_column')
         );
 
+        $referencingTypeColumn = $resolveInfo->getField()->getSetting('referencing_type_column');
+        if ($referencingTypeColumn !== null) {
+            $selection->where($referencingTypeColumn, $parentValue->getTable()->getName());
+        }
+
         $this->applyPaginationToSelection($selection, $args);
         $this->applyOrderToSelection($selection, $args);
         $this->applyConditionsToSelection($selection, $args);

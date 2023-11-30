@@ -4,6 +4,7 @@ namespace Efabrica\GraphQL\Nette\Schema\Loaders;
 
 use Efabrica\GraphQL\Helpers\DatabaseColumnTypeTransformer;
 use Efabrica\GraphQL\Nette\Factories\NetteDatabaseResolverFactoryInterface;
+use Efabrica\GraphQL\Nette\Schema\Loaders\Helpers\MorphRelationDefinition;
 use Efabrica\GraphQL\Schema\Custom\Arguments\ConditionsArgument;
 use Efabrica\GraphQL\Schema\Custom\Arguments\OrderArgument;
 use Efabrica\GraphQL\Schema\Custom\Arguments\PaginationArgument;
@@ -12,9 +13,11 @@ use Efabrica\GraphQL\Schema\Definition\Schema;
 use Efabrica\GraphQL\Schema\Definition\Types\ObjectType;
 use Efabrica\GraphQL\Schema\Definition\Types\Scalar\IDType;
 use Efabrica\GraphQL\Schema\Definition\Types\Scalar\IntType;
+use Efabrica\GraphQL\Schema\Definition\Types\UnionType;
 use Efabrica\GraphQL\Schema\Loaders\SchemaLoaderInterface;
 use Nette\Database\Explorer;
 use Nette\Database\IStructure;
+use Nette\Database\Table\ActiveRow;
 use Symfony\Component\String\Inflector\InflectorInterface;
 
 final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
@@ -39,12 +42,15 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
 
     private bool $forcedHasManyLongName = true;
 
+    private array $morphRelationDefinitions = [];
+
     public function __construct(
         Explorer $explorer,
         NetteDatabaseResolverFactoryInterface $resolverFactory,
         DatabaseColumnTypeTransformer $databaseColumnTypeTransformer,
         InflectorInterface $inflector
-    ) {
+    )
+    {
         $this->explorer = $explorer;
         $this->resolverFactory = $resolverFactory;
         $this->databaseColumnTypeTransformer = $databaseColumnTypeTransformer;
@@ -130,6 +136,29 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
                 );
             }
 
+            /** @var MorphRelationDefinition $morphRelationDefinition */
+            foreach ($this->getMorphRelationDefinitions()[$tableName] ?? [] as $morphRelationDefinition) {
+                $isNullable = false;
+                foreach ($this->getColumns($structure, $tableName) as $column) {
+                    if ($column['name'] === $morphRelationDefinition->getIdColumn()) {
+                        $isNullable = $column['nullable'];
+                    }
+                }
+
+                $objectType->addField(
+                    (new Field($morphRelationDefinition->getRelationName(),
+                        (new UnionType($morphRelationDefinition->getRelationName()))
+                            ->setObjectTypes(fn() => $baseObjectTypes)
+                            ->setResolveType(function (ActiveRow $value) use ($baseObjectTypes) {
+                                return $baseObjectTypes[$value->getTable()->getName()];
+                            })
+                    )
+                    )->setNullable($isNullable)
+                        ->setResolver($this->resolverFactory->createMorphToResolver())
+                        ->setSetting('morph_relation_definition', $morphRelationDefinition)
+                );
+            }
+
             foreach ($structure->getHasManyReference($tableName) as $relatedTable => $referencingColumns) {
                 foreach ($referencingColumns as $referencingColumn) {
                     if (!in_array(
@@ -166,6 +195,51 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
                             ->setResolver($this->resolverFactory->createHasManyCountResolver())
                             ->setSetting('table_name', $relatedTable)
                             ->setSetting('referencing_column', $referencingColumn)
+                    );
+                }
+            }
+
+            /**
+             * @var  MorphRelationDefinition[] $morphRelationDefinitions
+             */
+            foreach ($this->getMorphRelationDefinitions() as $morphRelationDefinitions) {
+                foreach ($morphRelationDefinitions as $morphRelationDefinition) {
+                    if (!in_array(
+                        $morphRelationDefinition->getIdColumn(),
+                        array_column($this->getColumns($structure, $morphRelationDefinition->getTable()), 'name'),
+                        true
+                    )) {
+                        continue;
+                    }
+
+                    if (!$relatedObject = $baseObjectTypes[$morphRelationDefinition->getTable()] ?? null) {
+                        continue;
+                    }
+
+                    $fieldName = $this->forcedHasManyLongName || count($morphRelationDefinitions) > 1
+                        ? $morphRelationDefinition->getTable() . '__' . $morphRelationDefinition->getIdColumn()
+                        : $morphRelationDefinition->getTable();
+
+                    $objectType->addField(
+                        (new Field($fieldName, $relatedObject))
+                            ->setMulti()
+                            ->addArgument($paginationArgument)
+                            ->addArgument($orderArgument)
+                            ->addArgument($conditions)
+                            ->setResolver($this->resolverFactory->createHasManyResolver())
+                            ->setSetting('table_name', $morphRelationDefinition->getTable())
+                            ->setSetting('referencing_column', $morphRelationDefinition->getIdColumn())
+                            ->setSetting('referencing_type_column', $morphRelationDefinition->getTypeColumn())
+                    );
+
+                    $objectType->addField(
+                        (new Field($fieldName . '_count', new IntType()))
+                            ->addArgument($orderArgument)
+                            ->addArgument($conditions)
+                            ->setResolver($this->resolverFactory->createHasManyCountResolver())
+                            ->setSetting('table_name', $morphRelationDefinition->getTable())
+                            ->setSetting('referencing_column', $morphRelationDefinition->getIdColumn())
+                            ->setSetting('referencing_type_column', $morphRelationDefinition->getTypeColumn())
                     );
                 }
             }
@@ -262,6 +336,23 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
     public function setBelongsToReplacePattern(string $belongsToReplacePattern): self
     {
         $this->belongsToReplacePattern = $belongsToReplacePattern;
+        return $this;
+    }
+
+    public function getMorphRelationDefinitions(): array
+    {
+        return $this->morphRelationDefinitions;
+    }
+
+    public function addMorphRelationDefinition(string $table, string $idColumn, string $typeColumn, string $relationName): self
+    {
+        $this->morphRelationDefinitions[$table][] = new MorphRelationDefinition($table, $idColumn, $typeColumn, $relationName);
+        return $this;
+    }
+
+    public function setMorphRelationDefinitions(string $table, ?array $morphRelationDefinitions): self
+    {
+        $this->morphRelationDefinitions[$table] = $morphRelationDefinitions;
         return $this;
     }
 
