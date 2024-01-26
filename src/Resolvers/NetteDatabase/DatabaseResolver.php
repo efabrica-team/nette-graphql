@@ -4,13 +4,18 @@ namespace Efabrica\GraphQL\Nette\Resolvers\NetteDatabase;
 
 use Efabrica\GraphQL\Exceptions\ResolverException;
 use Efabrica\GraphQL\Helpers\AdditionalResponseData;
+use Efabrica\GraphQL\Nette\Schema\Custom\Types\LiteralType;
 use Efabrica\GraphQL\Resolvers\ResolverInterface;
 use Efabrica\GraphQL\Schema\Custom\Arguments\ConditionsArgument;
 use Efabrica\GraphQL\Schema\Custom\Arguments\OrderArgument;
 use Efabrica\GraphQL\Schema\Custom\Arguments\PaginationArgument;
 use Efabrica\GraphQL\Schema\Custom\Fields\GroupField;
+use Efabrica\GraphQL\Schema\Custom\Fields\HavingAndField;
+use Efabrica\GraphQL\Schema\Custom\Fields\HavingOrField;
 use Efabrica\GraphQL\Schema\Custom\Fields\WhereAndField;
 use Efabrica\GraphQL\Schema\Custom\Fields\WhereOrField;
+use Efabrica\GraphQL\Schema\Custom\Types\GroupType;
+use Efabrica\GraphQL\Schema\Custom\Types\HavingType;
 use Efabrica\GraphQL\Schema\Custom\Types\OrderDirectionEnum;
 use Efabrica\GraphQL\Schema\Custom\Types\WhereComparatorEnum;
 use Efabrica\GraphQL\Schema\Custom\Types\WhereType;
@@ -54,17 +59,33 @@ abstract class DatabaseResolver implements ResolverInterface
     {
         foreach ($args[OrderArgument::NAME] ?? [] as $orderArgs) {
             $orderBy = $orderArgs[OrderArgument::FIELD_KEY] ?? null;
-            if ($orderBy) {
-                $order = $orderArgs[OrderArgument::FIELD_ORDER] ?? null;
+            $order = $orderArgs[OrderArgument::FIELD_ORDER] ?? null;
 
-                if ($order === OrderDirectionEnum::RAND) {
-                    $selection->order('RAND()');
-                } elseif ($order === OrderDirectionEnum::DESC) {
-                    $selection->order('?name DESC', $orderBy);
-                } else {
-                    $selection->order('?name ASC', $orderBy);
-                }
+            if ($order === OrderDirectionEnum::RAND) {
+                $selection->order('RAND()');
+                continue;
             }
+
+            if ($orderBy === null) {
+                continue;
+            }
+
+            $orderQuery = '';
+            $parameters = [];
+
+            if ($this->firstParty) {
+                $orderQuery = $orderBy;
+            } else {
+                $orderQuery .= ' ?name';
+                $parameters[] = $orderBy;
+            }
+
+            if ($order === OrderDirectionEnum::DESC) {
+                $orderQuery .= ' DESC';
+            } else {
+                $orderQuery .= ' ASC';
+            }
+            $selection->order($orderQuery, ...$parameters);
         }
     }
 
@@ -87,6 +108,25 @@ abstract class DatabaseResolver implements ResolverInterface
         if ($whereQuery) {
             $selection->where($whereQuery, ...$whereParameters);
         }
+
+        [$havingAndQuery, $havingAndParameters] = $this->buildHavingQuery(
+            $selection,
+            $args[ConditionsArgument::NAME][HavingAndField::NAME] ?? [],
+        );
+
+        [$havingOrQuery, $havingOrParameters] = $this->buildHavingQuery(
+            $selection,
+            $args[ConditionsArgument::NAME][HavingOrField::NAME] ?? [],
+            'OR'
+        );
+
+        $havingQuery = implode(' AND ', array_filter([$havingAndQuery, $havingOrQuery]));
+        $havingParameters = array_merge($havingAndParameters, $havingOrParameters);
+
+        if ($havingQuery) {
+            $selection->having($havingQuery, ...$havingParameters);
+        }
+
         $this->applyGroupToSelection($selection, $args[ConditionsArgument::NAME][GroupField::NAME] ?? []);
     }
 
@@ -190,8 +230,15 @@ abstract class DatabaseResolver implements ResolverInterface
                             throw new ResolverException("'$comparator' is not a valid comparator.");
                     }
 
-                    $conditionWhereQuery .= ' ?';
-                    $parameters[] = $value ?? 'NULL';
+                    if (LiteralType::isLiteral($value)) {
+                        if (!$this->firstParty) {
+                            throw new ResolverException("Literal values are not allowed when not in first party mode.");
+                        }
+                        $conditionWhereQuery .= ' ' . LiteralType::getLiteralValue($value);
+                    } else {
+                        $conditionWhereQuery .= ' ?';
+                        $parameters[] = $value ?? 'NULL';
+                    }
                 }
             }
 
@@ -201,11 +248,129 @@ abstract class DatabaseResolver implements ResolverInterface
         return [$whereQuery, $parameters];
     }
 
+    private function buildHavingQuery(Selection $selection, array $conditions, string $type = 'AND'): array
+    {
+        $havingQuery = '';
+        $parameters = [];
+
+        foreach ($conditions as $condition) {
+            $conditionHavingQuery = '';
+            if (!empty($havingQuery)) {
+                $conditionHavingQuery .= ' ' . $type;
+            }
+
+            $andSubHaving = $condition[HavingAndField::NAME] ?? [];
+            $orSubHaving = $condition[HavingOrField::NAME] ?? [];
+
+            if (count($andSubHaving) || count($orSubHaving)) {
+                $conditionAndHavingQuery = null;
+                $conditionOrHavingQuery = null;
+
+                [$subquery, $subparameters] = $this->buildHavingQuery($selection, $andSubHaving);
+                if ($subquery) {
+                    $conditionAndHavingQuery .= ' (' . $subquery . ')';
+                    $parameters = array_merge($parameters, $subparameters);
+                }
+
+                [$subquery, $subparameters] = $this->buildHavingQuery($selection, $orSubHaving, 'OR');
+                if ($subquery) {
+                    $conditionOrHavingQuery .= ' (' . $subquery . ')';
+                    $parameters = array_merge($parameters, $subparameters);
+                }
+
+                $conditionHavingQuery .= implode(
+                    ' AND ',
+                    array_filter([$conditionAndHavingQuery, $conditionOrHavingQuery])
+                );
+            } elseif ($condition[HavingType::FIELD_COLUMN] !== null) {
+                if ($this->firstParty) {
+                    // SQL INJECTION
+                    $conditionHavingQuery .= ' ' . $condition[HavingType::FIELD_COLUMN];
+                } else {
+                    // Will not join tables automaticaly when using variables nor will allow aggregate functions.
+                    $conditionHavingQuery .= ' ?name';
+                    $parameters[] = $condition[HavingType::FIELD_COLUMN];
+                }
+
+                $comparator = $condition[HavingType::FIELD_COMPARATOR];
+                $value = $condition[HavingType::FIELD_VALUE] ?? null;
+
+                if (in_array($comparator, [WhereComparatorEnum::IN, WhereComparatorEnum::NOT_IN], true)) {
+                    switch ($comparator) {
+                        case WhereComparatorEnum::IN:
+                            $conditionHavingQuery .= ' IN (?)';
+                            break;
+                        case WhereComparatorEnum::NOT_IN:
+                            if (!$value || !count($value = array_filter($value))) {
+                                continue 2;
+                            }
+                            $conditionHavingQuery .= ' NOT IN (?)';
+                            break;
+                    }
+                    $parameters[] = $value;
+                } elseif(in_array($comparator, [WhereComparatorEnum::NULL, WhereComparatorEnum::NOT_NULL], true)) {
+                    switch ($comparator) {
+                        case WhereComparatorEnum::NULL:
+                            $conditionHavingQuery .= ' IS NULL';
+                            break;
+                        case WhereComparatorEnum::NOT_NULL:
+                            $conditionHavingQuery .= ' IS NOT NULL';
+                            break;
+                    }
+                } else {
+                    $value = $value ? reset($value) : null;
+                    switch ($comparator) {
+                        case WhereComparatorEnum::EQUAL:
+                            $conditionHavingQuery .= ' =';
+                            break;
+                        case WhereComparatorEnum::NOT_EQUAL:
+                            $conditionHavingQuery .= ' !=';
+                            break;
+                        case WhereComparatorEnum::LESS_THAN:
+                            $conditionHavingQuery .= ' <';
+                            break;
+                        case WhereComparatorEnum::LESS_THAN_EQUAL:
+                            $conditionHavingQuery .= ' <=';
+                            break;
+                        case WhereComparatorEnum::MORE_THAN:
+                            $conditionHavingQuery .= ' >';
+                            break;
+                        case WhereComparatorEnum::MORE_THAN_EQUAL:
+                            $conditionHavingQuery .= ' >=';
+                            break;
+                        case WhereComparatorEnum::LIKE:
+                            $conditionHavingQuery .= ' LIKE';
+                            break;
+                        case WhereComparatorEnum::NOT_LIKE:
+                            $conditionHavingQuery .= ' NOT LIKE';
+                            break;
+                        default:
+                            throw new ResolverException("'$comparator' is not a valid comparator.");
+                    }
+
+                    if (LiteralType::isLiteral($value)) {
+                        if (!$this->firstParty) {
+                            throw new ResolverException('Literal values are not allowed when not in first party mode.');
+                        }
+                        $conditionHavingQuery .= ' ' . LiteralType::getLiteralValue($value);
+                    } else {
+                        $conditionHavingQuery .= ' ?';
+                        $parameters[] = $value ?? 'NULL';
+                    }
+                }
+            }
+
+            $havingQuery .= $conditionHavingQuery;
+        }
+
+        return [$havingQuery, $parameters];
+    }
+
     private function applyGroupToSelection(Selection $selection, array $conditions): void
     {
         $groupBy = [];
         foreach ($conditions as $condition) {
-            $groupBy[] = $condition[GroupField::FIELD_COLUMN];
+            $groupBy[] = $condition[GroupType::FIELD_COLUMN];
         }
 
         if ($this->firstParty) {

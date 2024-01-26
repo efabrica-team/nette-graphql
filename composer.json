@@ -18,11 +18,11 @@
     ],
     "require": {
         "php": "^7.4|^8.0",
-        "efabrica/graphql": "^0.2.1",
+        "ext-pdo": "*",
+        "efabrica/graphql": "0.2.2",
         "nette/database": "^3.1",
         "symfony/string": "^5.4",
-        "nette/di": "^3.1",
-        "ext-pdo": "*"
+        "nette/di": "^3.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
