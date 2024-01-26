@@ -59,17 +59,33 @@ abstract class DatabaseResolver implements ResolverInterface
     {
         foreach ($args[OrderArgument::NAME] ?? [] as $orderArgs) {
             $orderBy = $orderArgs[OrderArgument::FIELD_KEY] ?? null;
-            if ($orderBy) {
-                $order = $orderArgs[OrderArgument::FIELD_ORDER] ?? null;
+            $order = $orderArgs[OrderArgument::FIELD_ORDER] ?? null;
 
-                if ($order === OrderDirectionEnum::RAND) {
-                    $selection->order('RAND()');
-                } elseif ($order === OrderDirectionEnum::DESC) {
-                    $selection->order('?name DESC', $orderBy);
-                } else {
-                    $selection->order('?name ASC', $orderBy);
-                }
+            if ($order === OrderDirectionEnum::RAND) {
+                $selection->order('RAND()');
+                continue;
             }
+
+            if ($orderBy === null) {
+                continue;
+            }
+
+            $orderQuery = '';
+            $parameters = [];
+
+            if ($this->firstParty) {
+                $orderQuery = $orderBy;
+            } else {
+                $orderQuery .= ' ?name';
+                $parameters[] = $orderBy;
+            }
+
+            if ($order === OrderDirectionEnum::DESC) {
+                $orderQuery .= ' DESC';
+            } else {
+                $orderQuery .= ' ASC';
+            }
+            $selection->order($orderQuery, ...$parameters);
         }
     }
 

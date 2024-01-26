@@ -1,9 +1,14 @@
 # Changelog
 
 ## [Unreleased]
+
+## [0.2.2] - 2024-01-26
 ### Added
 - Support for having conditions
 - Literal condition values for first party mode
+
+### Changed
+- Order name can be unescaped in first party mode
 
 ## [0.2.1] - 2023-07-03
 ### Added
