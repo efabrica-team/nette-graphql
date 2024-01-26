@@ -19,7 +19,7 @@
     "require": {
         "php": "^7.4|^8.0",
         "ext-pdo": "*",
-        "efabrica/graphql": "0.2.2.x-dev",
+        "efabrica/graphql": "0.2.2",
         "nette/database": "^3.1",
         "symfony/string": "^5.4",
         "nette/di": "^3.1"
