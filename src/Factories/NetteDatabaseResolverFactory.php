@@ -6,6 +6,7 @@ use Efabrica\GraphQL\Helpers\AdditionalResponseData;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\BelongsToResolver;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\HasManyCountResolver;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\HasManyResolver;
+use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\MorphToResolver;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\TableCountResolver;
 use Efabrica\GraphQL\Nette\Resolvers\NetteDatabase\TableResolver;
 use Nette\Database\Explorer;
@@ -58,5 +59,10 @@ class NetteDatabaseResolverFactory implements NetteDatabaseResolverFactoryInterf
     public function createHasManyCountResolver(): HasManyCountResolver
     {
         return new HasManyCountResolver($this->explorer, $this->additionalResponseData, $this->firstParty);
+    }
+
+    public function createMorphToResolver(): MorphToResolver
+    {
+        return new MorphToResolver($this->explorer, $this->additionalResponseData, $this->firstParty);
     }
 }

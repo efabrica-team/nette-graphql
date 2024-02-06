@@ -15,4 +15,6 @@ interface NetteDatabaseResolverFactoryInterface
     public function createHasManyResolver(): ResolverInterface;
 
     public function createHasManyCountResolver(): ResolverInterface;
+
+    public function createMorphToResolver(): ResolverInterface;
 }
