@@ -4,8 +4,6 @@
 
 ## [0.2.3] - 2024-02-06
 ### Added
-- Support for having conditions
-- Literal condition values for first party mode
 - Support for morph relations
 
 ## [0.2.2] - 2024-01-26
