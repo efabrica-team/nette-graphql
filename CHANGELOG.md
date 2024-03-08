@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.5] - 2024-03-08
+### Fixed
+- Fixed conditions brackets for OR conditions
+
 ## [0.2.4] - 2024-02-28
 ### Fixed
 - Fixed efabrica/graphql version from 0.2.2 to ^0.2.2
@@ -40,7 +44,8 @@
 - Nette database schema loader
 - Nette database resolvers
 
-[Unreleased]: https://github.com/efabrica-team/nette-graphql/compare/0.2.4...main
+[Unreleased]: https://github.com/efabrica-team/nette-graphql/compare/0.2.5...main
+[0.2.5]: https://github.com/efabrica-team/nette-graphql/compare/0.2.4...0.2.5
 [0.2.4]: https://github.com/efabrica-team/nette-graphql/compare/0.2.3...0.2.4
 [0.2.3]: https://github.com/efabrica-team/nette-graphql/compare/0.2.2...0.2.3
 [0.2.2]: https://github.com/efabrica-team/nette-graphql/compare/0.2.1...0.2.2

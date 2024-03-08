@@ -242,7 +242,7 @@ abstract class DatabaseResolver implements ResolverInterface
                 }
             }
 
-            $whereQuery .= $conditionWhereQuery;
+            $whereQuery .= '(' . $conditionWhereQuery . ')';
         }
 
         return [$whereQuery, $parameters];
@@ -360,7 +360,7 @@ abstract class DatabaseResolver implements ResolverInterface
                 }
             }
 
-            $havingQuery .= $conditionHavingQuery;
+            $havingQuery .= '(' . $conditionHavingQuery . ')';
         }
 
         return [$havingQuery, $parameters];
