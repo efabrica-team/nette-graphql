@@ -74,7 +74,15 @@ abstract class DatabaseResolver implements ResolverInterface
             $parameters = [];
 
             if ($this->firstParty) {
-                $orderQuery = $orderBy;
+                if (preg_match_all('/\'([^\']+)\'/', $orderBy, $matches)) {
+                    $orderQuery = preg_replace('/\'([^\']+)\'/', '?', $orderBy);
+                    foreach ($matches[1] as $match) {
+                        $parameters[] = $match;
+                    }
+                } else {
+                    $orderQuery = $orderBy;
+                }
+
             } else {
                 $orderQuery .= ' ?name';
                 $parameters[] = $orderBy;

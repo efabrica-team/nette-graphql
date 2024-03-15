@@ -5,6 +5,7 @@
 ## [0.2.5] - 2024-03-08
 ### Fixed
 - Fixed conditions brackets for OR conditions
+- Fixed first party order conditions escaping quoted values
 
 ## [0.2.4] - 2024-02-28
 ### Fixed
