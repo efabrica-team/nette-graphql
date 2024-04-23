@@ -20,7 +20,7 @@ use Nette\Database\IStructure;
 use Nette\Database\Table\ActiveRow;
 use Symfony\Component\String\Inflector\InflectorInterface;
 
-final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
+class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
 {
     private Explorer $explorer;
 
@@ -59,7 +59,7 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
 
     public function getSchema(): Schema
     {
-        $structure = $this->explorer->getStructure();
+        $structure = $this->getDatabaseStructure();
 
         $query = new ObjectType('query');
 
@@ -356,7 +356,12 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
         return $this;
     }
 
-    private function getTables(IStructure $structure): array
+    protected function getDatabaseStructure(): IStructure
+    {
+        return $this->explorer->getStructure();
+    }
+
+    protected function getTables(IStructure $structure): array
     {
         $tables = array_column($structure->getTables(), 'name');
 
@@ -371,7 +376,7 @@ final class NetteDatabaseSchemaLoader implements SchemaLoaderInterface
         return $tables;
     }
 
-    private function getColumns(IStructure $structure, string $table): array
+    protected function getColumns(IStructure $structure, string $table): array
     {
         $columns = $structure->getColumns($table);
 
