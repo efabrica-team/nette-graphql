@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+## [0.2.6] - 2024-04-24
+### Changed
+- NetteDatabaseSchemaLoader is not more marked as final
 
 ## [0.2.5] - 2024-03-08
 ### Fixed
