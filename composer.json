@@ -21,7 +21,7 @@
         "ext-pdo": "*",
         "efabrica/graphql": "^0.2.2",
         "nette/database": "^3.1",
-        "symfony/string": "^5.4",
+        "symfony/string": "^5.4|^6.4|^7.0",
         "nette/di": "^3.1"
     },
     "require-dev": {
